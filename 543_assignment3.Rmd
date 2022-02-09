@@ -1,0 +1,59 @@
+---
+title: "543 assignment 3"
+output:
+  html_document:
+    df_print: paged
+---
+
+# Data Source
+This assignment would use the same data as the assignment 1 and assignment 2.
+
+#### 1. Data processing
+#### 1.1 Import the map
+```{r}
+linkMap="https://github.com/EvansDataScience/VAforPM_Spatial/raw/main/worldMap.geojson" 
+
+library(sf)
+mapWorld=read_sf(linkMap)
+
+# see data in map
+head(mapWorld)
+# the projection: WGS 84
+```
+
+#### 1.2 Show the Base Layer
+```{r}
+library(ggplot2)
+# plot original map
+base=ggplot(data=mapWorld) + geom_sf(fill='grey90',
+                                     color=NA) + theme_classic()
+
+base #base map
+```
+#### 1.3 Import the Data
+```{r}
+link = 'https://raw.githubusercontent.com/tianyl27/543_coursework_2/main/WHR2021.csv'
+
+# getting the data TABLE from the file:
+WHRData2021 <- read.csv(file=url(link))
+colnames(WHRData2021)[1]='NAME'
+head(WHRData2021)
+```
+
+
+#### 1.4 Merge the Data
+```{r}
+mapWorldVars=merge(mapWorld, #map first
+                   WHRData2021, 
+                   by='NAME') 
+
+
+```
+
+```{r}
+colMap= base + geom_sf(data=mapWorldVars,
+                       aes(fill=Ladder.score),
+                       color=NA)
+colMap
+```
+
