@@ -7,9 +7,11 @@ output:
 
 # Data Source
 This assignment would use the same data as the assignment 1 and assignment 2.
+  
+  
+#### 1. Data processing  
+#### 1.1 Import the map  
 
-#### 1. Data processing
-#### 1.1 Import the map
 ```{r}
 linkMap="https://github.com/EvansDataScience/VAforPM_Spatial/raw/main/worldMap.geojson" 
 
@@ -30,6 +32,7 @@ base=ggplot(data=mapWorld) + geom_sf(fill='grey90',
 
 base #base map
 ```
+  
 #### 1.3 Import the Data
 ```{r}
 link = 'https://raw.githubusercontent.com/tianyl27/543_coursework_2/main/WHR2021.csv'
@@ -38,22 +41,130 @@ link = 'https://raw.githubusercontent.com/tianyl27/543_coursework_2/main/WHR2021
 WHRData2021 <- read.csv(file=url(link))
 colnames(WHRData2021)[1]='NAME'
 head(WHRData2021)
+colnames(WHRData2021)[8]='GDP'
+colnames(WHRData2021)[10]='LifeExpectancy'
+colnames(WHRData2021)[23]='COVIDDeathRate'
+colnames(WHRData2021)[31]='GINI'
+```
+  
+#### 2. Cluster
+#### 2.1 Boxplot of interested variables  
+
+```{r}
+
+boxplot(WHRData2021[,c('GDP','LifeExpectancy','COVIDDeathRate','GINI')])
+
+```
+
+#### 2.2 Radar plot  
+
+```{r}
+library(reshape2)
+
+WHRData2021_sub = WHRData2021[,c('NAME','GDP','LifeExpectancy','COVIDDeathRate','GINI')]
+
+WHRData2021_long=melt(WHRData2021_sub,id.vars = 'NAME')
+head(WHRData2021_long)
+
+base2  = ggplot(WHRData2021_long, 
+               aes(x = variable, 
+                   y = value, 
+                   group = NAME)) + #new
+        geom_polygon(fill = 'gray',
+                     col='orange') 
+
+plot1 = base2 + coord_polar()
+
+plot2 = plot1 + facet_wrap(~NAME,# one plot per city
+                           ncol = 20) # ten plot per row
+#plot2 
+```
+
+#### 2.3 Standardize the variables  
+
+```{r}
+
+# standardize: all variable share the same range of value
+WHRData2021$GDP_S=as.vector(scale(WHRData2021$GDP))
+WHRData2021$LE_S=as.vector(scale(WHRData2021$LifeExpectancy))
+WHRData2021$CDR_S=as.vector(scale(WHRData2021$COVIDDeathRate))
+
+
+set.seed(121)
+
+library(cluster)
+vars=c('GDP_S','LE_S','CDR_S')#variables needed
+
+distMatrix=cluster::daisy(WHRData2021[,vars])
+          
+res.pam=cluster::pam(x=distMatrix,
+                     k = 4,
+                     cluster.only = F)
+
+
+WHRData2021$cluster=as.factor(res.pam$clustering)
+
+theVars=c('GDP_S','LE_S','CDR_S','cluster')
+aggregate(.~cluster,
+          data=WHRData2021[,theVars],
+          FUN=median)
+
+aggregate(.~cluster,
+          data=WHRData2021[,theVars],
+          FUN=mean)
+
+```
+
+#### 2.4 Rename the clusters  
+Rename each cluster according to the median and mean results.  
+
+```{r}
+WHRData2021$cluster=factor(WHRData2021$cluster,
+                           levels=c(3,1,2,4),
+                           labels=c("Developed and less deaths","Developed but most deaths","Moderate","Developing but least deaths"), 
+                           ordered=T)
 ```
 
 
-#### 1.4 Merge the Data
+#### 3 Mapping
+
+#### 3.1 Merge the Data
+Merge the data with the map data.  
+
 ```{r}
 mapWorldVars=merge(mapWorld, #map first
                    WHRData2021, 
                    by='NAME') 
 
-
 ```
+
+#### 3.2 Mapping Univariate Numerical
+Use the Ladder score, which is the comprehensive index of this report, to draw a choropleth map.  
 
 ```{r}
 colMap= base + geom_sf(data=mapWorldVars,
                        aes(fill=Ladder.score),
                        color=NA)
 colMap
+```
+
+#### 3.3 Mapping the clustering result  
+
+```{r}
+TitleText = "Country Performance in 2020 COVID epidemic"
+CaptionText = "Source: https://worldhappiness.report/ed/2021/"
+theLegTitle="World_Performance\n(grey is missing)"
+
+clusterMap= base + geom_sf(data=mapWorldVars,
+                       aes(fill=cluster),
+                       color=NA)
+
+clusterMap+ scale_fill_brewer(palette ='BuGn',
+                              direction = -1,
+                              name=theLegTitle)+ labs(title=TitleText,
+                                                      caption=CaptionText) +
+  theme(plot.title = element_text(hjust = 1), 
+        plot.caption = element_text(hjust = 0))
+
 ```
 
