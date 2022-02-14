@@ -39,12 +39,15 @@ link = 'https://raw.githubusercontent.com/tianyl27/543_coursework_2/main/WHR2021
 
 # getting the data TABLE from the file:
 WHRData2021 <- read.csv(file=url(link))
+
+# Rename some columns:
 colnames(WHRData2021)[1]='NAME'
-head(WHRData2021)
 colnames(WHRData2021)[8]='GDP'
 colnames(WHRData2021)[10]='LifeExpectancy'
 colnames(WHRData2021)[23]='COVIDDeathRate'
 colnames(WHRData2021)[31]='GINI'
+
+head(WHRData2021)
 ```
   
 #### 2. Cluster
@@ -63,6 +66,7 @@ library(reshape2)
 
 WHRData2021_sub = WHRData2021[,c('NAME','GDP','LifeExpectancy','COVIDDeathRate','GINI')]
 
+# change the wide format to the long format
 WHRData2021_long=melt(WHRData2021_sub,id.vars = 'NAME')
 head(WHRData2021_long)
 
@@ -76,8 +80,8 @@ base2  = ggplot(WHRData2021_long,
 plot1 = base2 + coord_polar()
 
 plot2 = plot1 + facet_wrap(~NAME,# one plot per city
-                           ncol = 20) # ten plot per row
-#plot2 
+                           ncol = 20) # 20 plot per row
+#plot2
 ```
 
 #### 2.3 Standardize the variables  
