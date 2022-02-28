@@ -127,6 +127,8 @@ WHRData2021$cluster=factor(WHRData2021$cluster,
                            levels=c(3,1,2,4),
                            labels=c("Developed and less deaths","Developed but most deaths","Moderate","Developing but least deaths"), 
                            ordered=T)
+saveRDS(WHRData2021,file = 'WHRData2021.rds')
+
 ```
 
 
@@ -139,7 +141,7 @@ Merge the data with the map data.
 mapWorldVars=merge(mapWorld, #map first
                    WHRData2021, 
                    by='NAME') 
-
+saveRDS(mapWorldVars,file = 'mapWorldVars.rds')
 ```
 
 #### 3.2 Mapping Univariate Numerical
@@ -163,12 +165,15 @@ clusterMap= base + geom_sf(data=mapWorldVars,
                        aes(fill=cluster),
                        color=NA)
 
-clusterMap+ scale_fill_brewer(palette ='BuGn',
+clusterMap2 = clusterMap+ scale_fill_brewer(palette ='BuGn',
                               direction = -1,
                               name=theLegTitle)+ labs(title=TitleText,
                                                       caption=CaptionText) +
   theme(plot.title = element_text(hjust = 1), 
         plot.caption = element_text(hjust = 0))
-
+clusterMap2
+```
+```{r}
+saveRDS(clusterMap2,file = 'CountryMap.rds')
 ```
 
